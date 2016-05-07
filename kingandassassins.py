@@ -3,7 +3,7 @@
 # Author: Sébastien Combéfis
 # Version: April 29, 2016
 
-import argparse
+import argparse  # To help the user and make user friendly command
 import json
 import random
 import socket
@@ -14,7 +14,8 @@ from lib import game
 BUFFER_SIZE = 2048
 
 CARDS = (
-    # (AP King, AP Knight, Fetter, AP Population/Assassins)
+    # to set the different cards with all their characteristic's
+    # (AP King, AP Knight, Fetter,  AP Population/Assassins)
     (1, 6, True, 5),
     (1, 5, False, 4),
     (1, 6, True, 5),
@@ -36,7 +37,7 @@ POPULATION = {
     'monk', 'plumwoman', 'appleman', 'hooker', 'fishwoman', 'butcher',
     'blacksmith', 'shepherd', 'squire', 'carpenter', 'witchhunter', 'farmer'
 }
-
+# Roof and Ground
 BOARD = (
     ('R', 'R', 'R', 'R', 'R', 'G', 'G', 'R', 'R', 'R'),
     ('R', 'R', 'R', 'R', 'R', 'G', 'G', 'R', 'R', 'R'),
@@ -50,7 +51,9 @@ BOARD = (
     ('R', 'R', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G')
 )
 
-# Coordinates of pawns on the board
+# Coordinates of pawns on the board at the beginning of the game
+# The matrix contains zeros on first line and first column and it's (Column,line)
+# You have to visualise the MAP with the castle in the top-left corner
 KNIGHTS = {(1, 3), (3, 0), (7, 8), (8, 7), (8, 8), (8, 9), (9, 8)}
 VILLAGERS = {
     (1, 7), (2, 1), (3, 4), (3, 6), (5, 2), (5, 5),
@@ -58,24 +61,25 @@ VILLAGERS = {
 }
 
 # Separate board containing the position of the pawns
-PEOPLE = [[None for column in range(10)] for row in range(10)]
+# Make the Layout on the matrix to give a position on the map
+MAP = [[None for column in range(10)] for row in range(10)]
 
 # Place the king in the right-bottom corner
-PEOPLE[9][9] = 'king'
+MAP[9][9] = 'king'
 
 # Place the knights on the board
 for coord in KNIGHTS:
-    PEOPLE[coord[0]][coord[1]] = 'knight'
+    MAP[coord[0]][coord[1]] = 'knight'
 
 # Place the villagers on the board
 # random.sample(A, len(A)) returns a list where the elements are shuffled
 # this randomizes the position of the villagers
 for villager, coord in zip(random.sample(POPULATION, len(POPULATION)), VILLAGERS):
-    PEOPLE[coord[0]][coord[1]] = villager
+    MAP[coord[0]][coord[1]] = villager
 
 KA_INITIAL_STATE = {
     'board': BOARD,
-    'people': PEOPLE,
+    'MAP': MAP,
     'castle': [(2, 2, 'N'), (4, 1, 'W')],
     'card': None,
     'king': 'healthy',
@@ -90,7 +94,10 @@ KA_INITIAL_STATE = {
 
 class KingAndAssassinsState(game.GameState):
     '''Class representing a state for the King & Assassins game.'''
-    
+    # the player 0 is the villagers & the assassins
+    # the player 1 is the king & the knights
+
+    # 'E' : move (zero in line, 1 in column) so go right
     DIRECTIONS = {
         'E': (0, 1),
         'W': (0, -1),
@@ -100,24 +107,24 @@ class KingAndAssassinsState(game.GameState):
 
     def __init__(self, initialstate=KA_INITIAL_STATE):
         super().__init__(initialstate)
-    
+
     def _nextfree(self, x, y, dir):
         nx, ny = self._getcoord((x, y, dir))
 
     def update(self, moves, player):
         visible = self._state['visible']
         hidden = self._state['hidden']
-        people = visible['people']
+        MAP = visible['MAP']
         for move in moves:
             print(move)
             # ('move', x, y, dir): moves person at position (x,y) of one cell in direction dir
             if move[0] == 'move':
                 x, y, d = int(move[1]), int(move[2]), move[3]
-                p = people[x][y]
+                p = MAP[x][y]
                 if p is None:
                     raise game.InvalidMoveException('{}: there is no one to move'.format(move))
                 nx, ny = self._getcoord((x, y, d))
-                new = people[nx][ny]
+                new = MAP[nx][ny]
                 # King, assassins, villagers can only move on a free cell
                 if p != 'knight' and new is not None:
                     raise game.InvalidMoveException('{}: cannot move on a cell that is not free'.format(move))
@@ -129,7 +136,7 @@ class KingAndAssassinsState(game.GameState):
                     raise game.InvalidMoveException('{}: the king and knights can only be moved by player 1'.format(move))
                 # Move granted if cell is free
                 if new is None:
-                    people[x][y], people[nx][ny] = people[nx][ny], people[x][y]
+                    MAP[x][y], MAP[nx][ny] = MAP[nx][ny], MAP[x][y]
                 # If cell is not free, check if the knight can push villagers
                 else:
                     pass
@@ -138,33 +145,33 @@ class KingAndAssassinsState(game.GameState):
                 if player != 1:
                     raise game.InvalidMoveException('arrest action only possible for player 1')
                 x, y, d = int(move[1]), int(move[2]), move[3]
-                arrester = people[x][y]
+                arrester = MAP[x][y]
                 if arrester != 'knight':
                     raise game.InvalidMoveException('{}: the attacker is not a knight'.format(move))
                 tx, ty = self._getcoord((x, y, d))
-                target = people[tx][ty]
+                target = MAP[tx][ty]
                 if target not in POPULATION:
                     raise game.InvalidMoveException('{}: only villagers can be arrested'.format(move))
-                visible['arrested'].append(people[tx][ty])
-                people[tx][ty] = None
+                visible['arrested'].append(MAP[tx][ty])
+                MAP[tx][ty] = None
             # ('kill', x, y, dir): kills the assassin/knight in direction dir with knight/assassin at position (x, y)
             elif move[0] == 'kill':
                 x, y, d = int(move[1]), int(move[2]), move[3]
-                killer = people[x][y]
+                killer = MAP[x][y]
                 if killer == 'assassin' and player != 0:
                     raise game.InvalidMoveException('{}: kill action for assassin only possible for player 0'.format(move))
                 if killer == 'knight' and player != 1:
                     raise game.InvalidMoveException('{}: kill action for knight only possible for player 1'.format(move))
                 tx, ty = self._getcoord((x, y, d))
-                target = people[tx][ty]
+                target = MAP[tx][ty]
                 if target is None:
                     raise game.InvalidMoveException('{}: there is no one to kill'.format(move))
                 if killer == 'assassin' and target == 'knight':
                     visible['killed']['knights'] += 1
-                    people[tx][tx] = None
+                    MAP[tx][tx] = None
                 elif killer == 'knight' and target == 'assassin':
                     visible['killed']['assassins'] += 1
-                    people[tx][tx] = None
+                    MAP[tx][tx] = None
                 else:
                     raise game.InvalidMoveException('{}: forbidden kill'.format(move))
             # ('attack', x, y, dir): attacks the king in direction dir with assassin at position (x, y)
@@ -172,11 +179,11 @@ class KingAndAssassinsState(game.GameState):
                 if player != 0:
                     raise game.InvalidMoveException('attack action only possible for player 0')
                 x, y, d = int(move[1]), int(move[2]), move[3]
-                attacker = people[x][y]
+                attacker = MAP[x][y]
                 if attacker != 'assassin':
                     raise game.InvalidMoveException('{}: the attacker is not an assassin'.format(move))
                 tx, ty = self._getcoord((x, y, d))
-                target = people[tx][ty]
+                target = MAP[tx][ty]
                 if target != 'king':
                     raise game.InvalidMoveException('{}: only the king can be attacked'.format(move))
                 visible['king'] = 'injured' if visible['king'] == 'healthy' else 'dead'
@@ -185,10 +192,10 @@ class KingAndAssassinsState(game.GameState):
                 if player != 0:
                     raise game.InvalidMoveException('raise action only possible for player 0')
                 x, y = int(move[1]), int(move[2])
-                p = people[x][y]
+                p = MAP[x][y]
                 if p not in hidden['assassins']:
                     raise game.InvalidMoveException('{}: the specified villager is not an assassin'.format(move))
-                people[x][y] = 'assassin'
+                MAP[x][y] = 'assassin'
         # If assassins' team just played, draw a new card
         if player == 0:
             visible['card'] = hidden['cards'].pop()
@@ -202,7 +209,7 @@ class KingAndAssassinsState(game.GameState):
         # The king reached the castle
         for doors in visible['castle']:
             coord = self._getcoord(doors)
-            if visible['people'][coord[0]][coord[1]] == 'king':
+            if visible['MAP'][coord[0]][coord[1]] == 'king':
                 return 1
         # The are no more cards
         if len(hidden['cards']) == 0:
@@ -217,7 +224,7 @@ class KingAndAssassinsState(game.GameState):
 
     def isinitial(self):
         return self._state['hidden']['assassins'] is None
-    
+
     def setassassins(self, assassins):
         self._state['hidden']['assassins'] = set(assassins)
 
@@ -230,10 +237,10 @@ class KingAndAssassinsState(game.GameState):
             result += '   - Remaining cards: {}\n'.format(len(hidden['cards']))
         result += '   - Current card: {}\n'.format(visible['card'])
         result += '   - King: {}\n'.format(visible['king'])
-        result += '   - People:\n'
+        result += '   - MAP:\n'
         result += '   +{}\n'.format('----+' * 10)
         for i in range(10):
-            result += '   | {} |\n'.format(' | '.join(['  ' if e is None else e[0:2] for e in visible['people'][i]]))
+            result += '   | {} |\n'.format(' | '.join(['  ' if e is None else e[0:2] for e in visible['MAP'][i]]))
             result += '   +{}\n'.format(''.join(['----+' if e == 'G' else '^^^^+' for e in visible['board'][i]]))
         print(result)
 
@@ -247,6 +254,7 @@ class KingAndAssassinsServer(game.GameServer):
 
     def __init__(self, verbose=False):
         super().__init__('King & Assassins', 2, KingAndAssassinsState(), verbose=verbose)
+        # verbose impose to the server to speek more and say who's connect etc
         self._state._state['hidden'] = {
             'assassins': None,
             'cards': random.sample(CARDS, len(CARDS))
@@ -286,6 +294,7 @@ class KingAndAssassinsClient(game.GameClient):
 
     def __init__(self, name, server, verbose=False):
         super().__init__(server, KingAndAssassinsState, verbose=verbose)
+        # verbose, impose to the server to speak more about who's connect and so on
         self.__name = name
 
     def _handle(self, message):
@@ -304,12 +313,16 @@ class KingAndAssassinsClient(game.GameClient):
         #   ('reveal', x, y): reveals villager at position (x,y) as an assassin
         state = state._state['visible']
         if state['card'] is None:
-            return json.dumps({'assassins': ['monk', 'hooker', 'fishwoman']}, separators=(',', ':'))
+            ass1 = state['MAP'][7][1]
+            ass2 = state['MAP'][5][5]
+            ass3 = state['MAP'][1][7]
+            self.assassins_list = [ass1, ass2, ass3]
+            return json.dumps({'assassins': [ass1, ass2, ass3]}, separators=(',', ':'))
         else:
             if self._playernb == 0:
                 for i in range(10):
                     for j in range(10):
-                        if state['people'][i][j] in {'monk', 'hooker', 'fishwoman'}:
+                        if state['MAP'][i][j] in {'monk', 'hooker', 'fishwoman'}:
                             return json.dumps({'actions': [('reveal', i, j)]}, separators=(',', ':'))
                 return json.dumps({'actions': []}, separators=(',', ':'))
             else:
@@ -344,4 +357,3 @@ if __name__ == '__main__':
         KingAndAssassinsServer(verbose=args.verbose).run()
     else:
         KingAndAssassinsClient(args.name, (args.host, args.port), verbose=args.verbose)
-        
