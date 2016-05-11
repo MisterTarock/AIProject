@@ -1,0 +1,9 @@
+You need to launch the server by command
+$ python kingandassassins_victor.py server -v
+
+You open a new command window
+$ python kingandassassins_victor.py client bou -v
+
+You open a new command window
+$ python kingandassassins_victor.py client ya -v
+

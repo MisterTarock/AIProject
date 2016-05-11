@@ -3,7 +3,7 @@
 # Author: Sébastien Combéfis
 # Version: April 29, 2016
 
-import argparse # To help the user and make user friendly command
+import argparse  # To help the user and make user friendly command
 import json
 import random
 import socket
@@ -61,7 +61,7 @@ VILLAGERS = {
 }
 
 # Separate board containing the position of the pawns
-# Make the Layout on the matrix to give a position on the map
+# Make the Layout on the matrix to give a position on the MAP (people)
 PEOPLE = [[None for column in range(10)] for row in range(10)]
 
 # Place the king in the right-bottom corner
@@ -143,7 +143,7 @@ class KingAndAssassinsState(game.GameState):
                     raise game.InvalidMoveException('{}: cannot move on a cell that is not free'.format(move))
                 if p == 'king' and BOARD[nx][ny] == 'R':
                     raise game.InvalidMoveException('{}: the king cannot move on a roof'.format(move))
-                if p in {'assassin'} + POPULATION and player != 0:
+                if p in {'assassin'}.union(POPULATION) and player != 0:
                     raise game.InvalidMoveException('{}: villagers and assassins can only be moved by player 0'.format(move))
                 if p in {'king', 'knight'} and player != 1:
                     raise game.InvalidMoveException('{}: the king and knights can only be moved by player 1'.format(move))
@@ -188,10 +188,10 @@ class KingAndAssassinsState(game.GameState):
                     raise game.InvalidMoveException('{}: there is no one to kill'.format(move))
                 if killer == 'assassin' and target == 'knight':
                     visible['killed']['knights'] += 1
-                    people[tx][tx] = None
+                    people[tx][ty] = None
                 elif killer == 'knight' and target == 'assassin':
                     visible['killed']['assassins'] += 1
-                    people[tx][tx] = None
+                    people[tx][ty] = None
                 else:
                     raise game.InvalidMoveException('{}: forbidden kill'.format(move))
             # ('attack', x, y, dir): attacks the king in direction dir with assassin at position (x, y)
@@ -312,11 +312,14 @@ class KingAndAssassinsClient(game.GameClient):
     '''Class representing a client for the King & Assassins game'''
 
     def __init__(self, name, server, verbose=False):
-        super().__init__(server, KingAndAssassinsState, verbose=verbose)
         self.__name = name
+        self.turn = 0
+        super().__init__(server, KingAndAssassinsState, verbose=verbose)
+
 
     def _handle(self, message):
         pass
+
 
     def _nextmove(self, state):
         # Two possible situations:
@@ -330,21 +333,103 @@ class KingAndAssassinsClient(game.GameClient):
         #   ('attack', x, y, dir): attacks the king in direction dir with assassin at position (x, y)
         #   ('reveal', x, y): reveals villager at position (x,y) as an assassin
         state = state._state['visible']
+
         if state['card'] is None:
-            ass1 = state['MAP'][7][1]
-            ass2 = state['MAP'][5][5]
-            ass3 = state['MAP'][1][7]
-            self.assassins_list = [ass1, ass2, ass3]
+            ass1 = state['people'][7][1]
+            ass2 = state['people'][5][5]
+            ass3 = state['people'][1][7]
+            self.ass_1 = [ass1, 7, 1]
+            self.ass_2 = [ass2, 5, 5]
+            self.ass_3 = [ass3, 1, 7]
+
+            print('Tour=')
+            print(self.turn)
+            print("Choix des Assassins")
+            self.turn += 1
             return json.dumps({'assassins': [ass1, ass2, ass3]}, separators=(',', ':'))
+
         else:
             if self._playernb == 0:
-                for i in range(10):
-                    for j in range(10):
-                        if state['people'][i][j] in {'monk', 'hooker', 'fishwoman'}:
-                            return json.dumps({'actions': [('reveal', i, j)]}, separators=(',', ':'))
-                return json.dumps({'actions': []}, separators=(',', ':'))
+
+                if self.turn == 1:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('reveal', 1, 7), ('move', 1, 7, 'W'),
+                                                   ('move', 1, 6, 'W'), ('move', 1, 5, 'W'),
+                                                   ('kill', 1, 4, 'W'), ('move', 1, 4, 'W')]})
+
+                if self.turn == 2:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 5, 2, 'E'), ('move', 5, 3, 'E')]})
+
+
+                if self.turn == 3:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 3, 4, 'W'), ('move', 3, 3, 'S'),
+                                                   ('move', 4, 3, 'S'), ('move', 5, 3, 'S')]})
+                if self.turn == 4:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 1, 3, 'W'), ('move', 1, 2, 'W'),
+                                                   ('move', 1, 1, 'W'), ('move', 1, 0, 'S'),
+                                                   ('kill', 2, 0, 'S')]})
+                else:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': []})
+
             else:
-                return json.dumps({'actions': []}, separators=(',', ':'))
+
+                if self.turn == 1:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 9, 8, 'W'), ('move', 9, 7, 'W'),
+                                                   ('arrest', 9, 6, 'W')]})
+
+                if self.turn == 2:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 8, 7, 'W'), ('move', 8, 6, 'W'),
+                                                   ('move', 8, 5, 'W'), ('arrest', 8, 4, 'W')]})
+
+                if self.turn == 3:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 7, 8, 'N'), ('move', 6, 8, 'N'),
+                                                   ('arrest', 5, 8, 'W'),('arrest', 5, 8, 'E')]})
+                if self.turn == 4:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 8, 8, 'W'), ('move', 8, 7, 'N'),
+                                                   ('move', 9, 9, 'W'), ('move', 9, 8, 'N')]})
+                                                    #A Knight and the King
+                if self.turn == 5:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': [('move', 8, 8, 'N'), ('move', 7, 8, 'N'),
+                                                   ('move', 5, 8, 'N'), ('move', 4, 8, 'N'),
+                                                   ('move', 3, 8, 'W'), ('arrest', 3, 7, 'W')]})
+                                                    # The King and a Knight
+
+                else:
+                    print('Tour=')
+                    print(self.turn)
+                    self.turn += 1
+                    return json.dumps({'actions': []})
+
+
 
 
 if __name__ == '__main__':
