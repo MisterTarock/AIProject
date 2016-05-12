@@ -313,7 +313,7 @@ class KingAndAssassinsClient(game.GameClient):
 
     def __init__(self, name, server, verbose=False):
         self.__name = name
-        self.turn = 0
+        self.__turn = 0
         super().__init__(server, KingAndAssassinsState, verbose=verbose)
 
 
@@ -343,90 +343,131 @@ class KingAndAssassinsClient(game.GameClient):
             self.ass_3 = [ass3, 1, 7]
 
             print('Tour=')
-            print(self.turn)
+            print(self.__turn)
             print("Choix des Assassins")
-            self.turn += 1
+            self.__turn += 1
             return json.dumps({'assassins': [ass1, ass2, ass3]}, separators=(',', ':'))
 
         else:
             if self._playernb == 0:
 
-                if self.turn == 1:
+                if self.__turn == 1:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('reveal', 1, 7), ('move', 1, 7, 'W'),
                                                    ('move', 1, 6, 'W'), ('move', 1, 5, 'W'),
                                                    ('kill', 1, 4, 'W'), ('move', 1, 4, 'W')]})
 
-                if self.turn == 2:
+                if self.__turn == 2:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 5, 2, 'E'), ('move', 5, 3, 'E')]})
 
 
-                if self.turn == 3:
+                if self.__turn == 3:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 3, 4, 'W'), ('move', 3, 3, 'S'),
                                                    ('move', 4, 3, 'S'), ('move', 5, 3, 'S')]})
-                if self.turn == 4:
+                if self.__turn == 4:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 1, 3, 'W'), ('move', 1, 2, 'W'),
                                                    ('move', 1, 1, 'W'), ('move', 1, 0, 'S'),
                                                    ('kill', 2, 0, 'S')]})
+                if self.__turn == 5:
+                    print('Tour=')
+                    print(self.__turn)
+                    self.__turn += 1
+                    return json.dumps({'actions': [('reveal', 7, 1), ('reveal', 5, 5),
+                                                   ('move', 7, 1, 'E'), ('move', 7, 2, 'E'),
+                                                   ('move', 7, 3, 'E')]})
+
+                if self.__turn == 6:
+                    print('Tour=')
+                    print(self.__turn)
+                    print('Bouya!! Attaque Kamikaze!')
+                    self.__turn += 1
+                    return json.dumps({'actions': [('move', 5, 5, 'E'), ('move', 5, 6, 'E'),
+                                                   ('move', 5, 7, 'E'), ('attack', 5, 8, 'S')]})
+                if self.__turn == 7:
+                    print('Tour=')
+                    print(self.__turn)
+                    print('Bastooooooonnn!!!')
+                    self.__turn += 1
+                    return json.dumps({'actions': [('move', 2, 0, 'S'), ('move', 3, 0, 'E'),
+                                                   ('move', 3, 1, 'E'), ('move', 3, 2, 'E'),
+                                                   ('move', 3, 3, 'E'), ('move', 3, 4, 'E'),
+                                                   ('move', 3, 5, 'E'), ('kill', 3, 6, 'E')
+                                                   ]})
+
+
                 else:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': []})
 
             else:
 
-                if self.turn == 1:
+                if self.__turn == 1:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 9, 8, 'W'), ('move', 9, 7, 'W'),
                                                    ('arrest', 9, 6, 'W')]})
 
-                if self.turn == 2:
+                if self.__turn == 2:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 8, 7, 'W'), ('move', 8, 6, 'W'),
                                                    ('move', 8, 5, 'W'), ('arrest', 8, 4, 'W')]})
 
-                if self.turn == 3:
+                if self.__turn == 3:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 7, 8, 'N'), ('move', 6, 8, 'N'),
                                                    ('arrest', 5, 8, 'W'),('arrest', 5, 8, 'E')]})
-                if self.turn == 4:
+                if self.__turn == 4:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 8, 8, 'W'), ('move', 8, 7, 'N'),
                                                    ('move', 9, 9, 'W'), ('move', 9, 8, 'N')]})
                                                     #A Knight and the King
-                if self.turn == 5:
+                if self.__turn == 5:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': [('move', 8, 8, 'N'), ('move', 7, 8, 'N'),
                                                    ('move', 5, 8, 'N'), ('move', 4, 8, 'N'),
                                                    ('move', 3, 8, 'W'), ('arrest', 3, 7, 'W')]})
                                                     # The King and a Knight
+                if self.__turn == 6:
+                    print('Tour=')
+                    print(self.__turn)
+                    print('Chargéééé! Pour le roi!!! Mort aux Rebelles!')
+                    self.__turn += 1
+                    return json.dumps({'actions': [('move', 7, 7, 'N'), ('move', 6, 7, 'N'),
+                                                   ('kill', 5, 7, 'E'), ('kill', 8, 4, 'N')]})
+                if self.__turn == 7:
+                    print('Tour=')
+                    print(self.__turn)
+                    print("Pour l'Empireee!!!!")
+                    self.__turn += 1
+                    return json.dumps({'actions': [('move', 5, 7, 'N'), ('move', 4, 7, 'N'),
+                                                   ('kill', 3, 7, 'W')]})
 
                 else:
                     print('Tour=')
-                    print(self.turn)
-                    self.turn += 1
+                    print(self.__turn)
+                    self.__turn += 1
                     return json.dumps({'actions': []})
 
 
