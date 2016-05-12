@@ -2,7 +2,7 @@
 First try to make a simple AI to play King&Assassins
 
   The code in his actual state simulate some round but I'm aware that's not a
-true AI.
+true AI who thinks by herself. :/
 
   It take some time to understand the actual structure of the STATEpart of
 the game, to add some comment, to use it and correct the reccurent error
